@@ -55,6 +55,8 @@ export function registerSocketHandlers(io) {
     socket.on('start-round', (roomId) => {
       const room = roomManager.getRoom(roomId);
       if (!room) return;
+      if (room.hostId !== socket.id) return;
+      if (room.players.length < 2) return;
 
       // Reset gestures for the new round
       gameService.resetRound(room);

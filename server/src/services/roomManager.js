@@ -64,6 +64,9 @@ export class RoomManager {
     if (room.status !== 'waiting') {
       throw new Error('Game already in progress.');
     }
+    if (room.players.some((p) => p.id === socketId)) {
+      throw new Error('Already in room.');
+    }
 
     room.players.push({
       id: socketId,
