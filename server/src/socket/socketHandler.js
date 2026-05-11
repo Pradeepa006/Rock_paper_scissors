@@ -58,10 +58,17 @@ export function registerSocketHandlers(io) {
       if (room.hostId !== socket.id) return;
       if (room.players.length < 2) return;
 
+      // If the match was finished, reset scores and round counter for a fresh game
+      if (room.status === 'finished') {
+        room.players.forEach((p) => { p.score = 0; });
+        room.currentRound = 1;
+        room.status = 'playing';
+      }
+
       // Reset gestures for the new round
       gameService.resetRound(room);
 
-      // Broadcast countdown to both players
+      // Broadcast round-starting to both players
       io.to(roomId).emit('round-starting', { round: room.currentRound });
 
       // Synchronized countdown: 3-2-1-GO
@@ -91,6 +98,27 @@ export function registerSocketHandlers(io) {
         io.to(roomId).emit('round-result', result);
         console.log(`🏆 Round result in ${roomId}:`, result.winner);
       }
+    });
+
+    // ── WebRTC Signaling Relay ────────────────────────────────────
+    // Non-host signals it's ready → host creates offer
+    socket.on('webrtc-ready', ({ roomId }) => {
+      socket.to(roomId).emit('webrtc-peer-ready');
+    });
+
+    // Relay offer from host to non-host
+    socket.on('webrtc-offer', ({ roomId, offer }) => {
+      socket.to(roomId).emit('webrtc-offer', { offer });
+    });
+
+    // Relay answer from non-host to host
+    socket.on('webrtc-answer', ({ roomId, answer }) => {
+      socket.to(roomId).emit('webrtc-answer', { answer });
+    });
+
+    // Relay ICE candidates between peers
+    socket.on('webrtc-ice-candidate', ({ roomId, candidate }) => {
+      socket.to(roomId).emit('webrtc-ice-candidate', { candidate });
     });
 
     // ── Leave Room ───────────────────────────────────────────────
@@ -126,3 +154,4 @@ function handlePlayerLeave(socket, roomId, io) {
     console.log(`🗑️  Room deleted: ${roomId}`);
   }
 }
+

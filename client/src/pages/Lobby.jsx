@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext.jsx';
 
@@ -8,9 +8,16 @@ function Lobby() {
   const socket = useSocket();
 
   const [playerName, setPlayerName] = useState('');
+  const playerNameRef = useRef(playerName);
+  useEffect(() => { playerNameRef.current = playerName; }, [playerName]);
+
   const [error, setError] = useState(null);
   const [room, setRoom] = useState(null); // the active room state
+  const roomRef = useRef(null);
   const [loading, setLoading] = useState(false);
+
+  // Keep roomRef in sync so socket callbacks can read latest room
+  useEffect(() => { roomRef.current = room; }, [room]);
 
   // When another player joins or status updates
   useEffect(() => {
@@ -31,12 +38,17 @@ function Lobby() {
     });
 
     socket.on('round-starting', () => {
-      setRoom((currentRoom) => {
-        if (currentRoom) {
-          navigate('/game', { state: { isMultiplayer: true, roomId: currentRoom.id, initialRoom: currentRoom } });
-        }
-        return currentRoom;
-      });
+      const currentRoom = roomRef.current;
+      if (currentRoom) {
+        navigate('/multiplayer-game', {
+          state: {
+            isMultiplayer: true,
+            roomId: currentRoom.id,
+            initialRoom: currentRoom,
+            playerName: playerNameRef.current,
+          },
+        });
+      }
     });
 
     return () => {

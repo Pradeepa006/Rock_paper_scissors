@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import Game from './pages/Game.jsx';
 import Lobby from './pages/Lobby.jsx';
+import MultiplayerGame from './pages/MultiplayerGame.jsx';
 import { SocketProvider } from './context/SocketContext.jsx';
 
 /**
@@ -22,6 +23,7 @@ function App() {
             <Route path="/game" element={<Game />} />
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/lobby/:roomId" element={<Lobby />} />
+            <Route path="/multiplayer-game" element={<MultiplayerGame />} />
           </Routes>
         </div>
       </Router>
